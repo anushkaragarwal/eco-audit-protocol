@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EcoAudit Dashboard</title>
+</head>
+
+<body style="font-family: Arial; padding: 20px;">
+
+  <h1>🌱 EcoAudit Dashboard</h1>
+  <button onclick="runAudit()">Run ESG Audit</button>
+
+  <div id="results" style="margin-top:20px;"></div>
+
+  <script>
+    async function runAudit() {
+      const res = await fetch("http://127.0.0.1:8000/analyze");
+      const data = await res.json();
+
+      let html = "";
+
+      data.forEach(company => {
+        let color = company.score < 70 ? "red" : "green";
+
+        html += `
+          <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+            <h2>${company.company}</h2>
+            <p style="color:${color}; font-weight:bold;">
+              ESG Score: ${company.score}
+            </p>
+            <p>Reason: ${company.reason}</p>
+          </div>
+        `;
+      });
+
+      document.getElementById("results").innerHTML = html;
+    }
+  </script>
+
+</body>
+</html>
