@@ -1,55 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>EcoAudit Dashboard</title>
+    <meta charset="UTF-8">
+    <title>EcoAudit</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
-<body style="font-family: Arial; padding: 20px;">
-  <input type="text" id="companyInput" placeholder="Enter company name" />
-<button onclick="analyzeCompany()">Analyze</button>
+<body>
 
-<pre id="result"></pre>
+<section class="hero">
 
-<script>
-async function analyzeCompany() {
-    const company = document.getElementById("companyInput").value;
+    <!-- LEFT SIDE -->
+    <div class="hero-left">
+        <h1>🌱 EcoAudit</h1>
 
-    const response = await fetch(`http://127.0.0.1:8000/analyze?company=${company}`);
-    const data = await response.json();
+        <p class="tagline">
+            AI-powered ESG verification platform to expose greenwashing in real-time
+        </p>
 
-    document.getElementById("result").innerText = JSON.stringify(data, null, 2);
-}
-</script>
+        <div class="stats">
+            <div>
+                <h2>80%</h2>
+                <p>Fake ESG Claims</p>
+            </div>
+            <div>
+                <h2>65%</h2>
+                <p>Misreported Data</p>
+            </div>
+            <div>
+                <h2>45%</h2>
+                <p>Investor Misled</p>
+            </div>
+        </div>
 
-  <h1>🌱 EcoAudit Dashboard</h1>
-  <button onclick="runAudit()">Run ESG Audit</button>
+        <!-- ✅ ONLY BUTTON -->
+        <button onclick="window.location.href='dashboard.html'">
+            Start Auditing →
+        </button>
 
-  <div id="results" style="margin-top:20px;"></div>
+    </div>
 
-  <script>
-    async function runAudit() {
-      const res = await fetch("http://127.0.0.1:8000/analyze");
-      const data = await res.json();
+    <!-- RIGHT IMAGE -->
+    <div class="hero-right">
+        <img src="green.jpeg" alt="eco">
+    </div>
 
-      let html = "";
-
-      data.forEach(company => {
-        let color = company.score < 70 ? "red" : "green";
-
-        html += `
-          <div style="border:1px solid #ccc; padding:10px; margin:10px;">
-            <h2>${company.company}</h2>
-            <p style="color:${color}; font-weight:bold;">
-              ESG Score: ${company.score}
-            </p>
-            <p>Reason: ${company.reason}</p>
-          </div>
-        `;
-      });
-
-      document.getElementById("results").innerHTML = html;
-    }
-  </script>
+</section>
 
 </body>
-</html>cd
+</html>

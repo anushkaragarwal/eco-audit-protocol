@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>EcoAudit Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<section class="hero">
+
+    <!-- LEFT SIDE -->
+    <div class="hero-left">
+        <h1>🌱 ESG Dashboard</h1>
+
+        <p class="tagline">
+            Analyze real-time ESG impact using AI
+        </p>
+
+        <div style="margin-top:20px;">
+            <input id="companyInput" placeholder="Enter company name" />
+            <button onclick="analyzeCompany()">Analyze</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="hero-right">
+        <img src="audit.jpeg" alt="audit">
+    </div>
+
+</section>
+
+<script>
+async function analyzeCompany() {
+    console.log("clicked");
+    const company = document.getElementById("companyInput").value;
+document.getElementById("companyInput").value;    
+
+
+    if (!company) {
+        alert("Enter company name");
+        return;
+    }
+
+    const response = await fetch(`http://127.0.0.1:8000/analyze?company=${company}`);
+    const data = await response.json();
+    console.log(data.events);
+
+   let html = `
+<div class="overlay" onclick="this.remove()">
+    <div class="result-box" onclick="event.stopPropagation()">
+
+        <h2>${data.company.toUpperCase()}</h2>
+
+        <p><b>Official ESG:</b> ${data.official_esg}</p>
+        <p><b>True ESG:</b> ${data.true_esg}</p>
+        <p><b>Delta:</b> ${data.delta}</p>
+
+        <p><b>Risk Level:</b> 
+            <span style="color:${
+                data.risk_level === "HIGH" ? "red" :
+                data.risk_level === "MEDIUM" ? "orange" : "lightgreen"
+            }">
+                ${data.risk_level}
+            </span>
+        </p>
+
+        <hr>
+`;
+
+const seen = new Set();
+
+data.events.forEach(event => {
+    if (!seen.has(event.reason)) {
+        seen.add(event.reason);
+
+        html += `
+            <div style="border:1px solid #ccc; padding:10px; margin:10px 0; border-radius:8px;">
+                <p><b>Reason:</b> ${event.reason}</p>
+                <p><b>Score:</b> ${event.score}</p>
+                <p><b>Confidence:</b> ${event.confidence}</p>
+            </div>
+        `;
+    }
+});
+html += `</div></div>`;
+
+// IMPORTANT: append to body
+document.getElementById("result").innerHTML = html;
+}
+</script>
+
+</body>
+</html>
