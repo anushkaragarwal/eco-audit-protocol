@@ -5,6 +5,21 @@
 </head>
 
 <body style="font-family: Arial; padding: 20px;">
+  <input type="text" id="companyInput" placeholder="Enter company name" />
+<button onclick="analyzeCompany()">Analyze</button>
+
+<pre id="result"></pre>
+
+<script>
+async function analyzeCompany() {
+    const company = document.getElementById("companyInput").value;
+
+    const response = await fetch(`http://127.0.0.1:8000/analyze?company=${company}`);
+    const data = await response.json();
+
+    document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+}
+</script>
 
   <h1>🌱 EcoAudit Dashboard</h1>
   <button onclick="runAudit()">Run ESG Audit</button>
@@ -37,4 +52,4 @@
   </script>
 
 </body>
-</html>
+</html>cd
