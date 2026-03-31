@@ -1,4 +1,7 @@
+CACHE = {}
+CACHE_TIME = 300 #5 MIN
 import requests
+from esg_engine import calculate_true_esg, get_risk_level
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
@@ -23,7 +26,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import time
+
 def fetch_news(company):
+    current_time = time.time()
+
+    # ✅ check cache
+    if company in CACHE:
+        cached_data, timestamp = CACHE[company]
+
+        if current_time - timestamp < CACHE_TIME:
+            return cached_data
+
+    # 🔽 normal API call
     url = f"https://newsapi.org/v2/everything?q={company}&apiKey={API_KEY}"
     response = requests.get(url)
 
@@ -36,6 +51,9 @@ def fetch_news(company):
     for article in data.get("articles", []):
         text = (article.get("title", "") + " " + str(article.get("description", "")))
         articles.append(text)
+
+    # ✅ store in cache
+    CACHE[company] = (articles, current_time)
 
     return articles
 
@@ -76,6 +94,7 @@ def analyze(company: str):
 
     results = []
 
+    # 🔁 LOOP (sirf data collect)
     for text in news_list:
         event = analyze_news(text)
 
@@ -93,31 +112,73 @@ def analyze(company: str):
             "timestamp": datetime.now().isoformat()
         })
 
-    if results:
-        total_score = sum(item["score"] for item in results)
-        true_score = int(total_score / len(results))
-    else:
-        true_score = BASE_SCORE
+    # ✅ LOOP KE BAAD (IMPORTANT)
+    official_esg = OFFICIAL_ESG.get(company.lower(), 75)
 
+    # ✅ ESG CALCULATION
     if not results:
-        return [{"message": "No ESG violations detected currently"}]
-
-    official_score = OFFICIAL_ESG.get(company.lower(), 80)
-    delta = official_score - true_score
-
-    if delta > 15:
-        risk = "HIGH"
-    elif delta > 5:
-        risk = "MEDIUM"
-    else:
+        true_esg = official_esg
         risk = "LOW"
+        delta = 0
+    else:
+        true_esg = calculate_true_esg(official_esg, results)
+        risk = get_risk_level(true_esg)
+        delta = official_esg - true_esg
 
+    # ✅ FINAL RESPONSE
     return {
         "company": company,
-        "official_esg": official_score,
-        "true_esg": true_score,
+        "official_esg": official_esg,
+        "true_esg": true_esg,
         "delta": delta,
         "risk_level": risk,
         "articles_analyzed": len(news_list),
-        "events": results[:5]
+        "events": results[:5],
+        "timestamp": datetime.now().isoformat()
+    }
+@app.get("/analyze_multiple")
+def analyze_multiple(companies: str):
+    company_list = companies.split(",")
+
+    output = []
+
+    for company in company_list:
+        company = company.strip().lower()
+
+        news_list = fetch_news(company)
+
+        if not news_list:
+            news_list = ["Company involved in environmental pollution and legal violation"]
+
+        results = []
+
+        # 🔁 LOOP
+        for text in news_list:
+            event = analyze_news(text)
+
+            if event["impact"] == "neutral":
+                continue
+
+            results.append({
+                "reason": event["reason"],
+                "confidence": event["severity"]
+            })
+
+        # ✅ LOOP KE BAAD
+        official_esg = OFFICIAL_ESG.get(company, 75)
+
+        if not results:
+            true_esg = official_esg
+        else:
+            true_esg = calculate_true_esg(official_esg, results)
+
+        output.append({
+            "company": company,
+            "official_esg": official_esg,
+            "true_esg": true_esg
+        })
+
+    return {
+        "results": output,
+        "timestamp": datetime.now().isoformat()
     }
