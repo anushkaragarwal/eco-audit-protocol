@@ -45,7 +45,7 @@ document.getElementById("companyInput").value;
         return;
     }
 
-    const response = await fetch(`http://127.0.0.1:8000/analyze?company=${company}`);
+    const response = await fetch(`https://ecoaudit-backend-hgro.onrender.com/analyze?company=${company}`);
     const data = await response.json();
     console.log(data.events);
 
